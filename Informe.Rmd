@@ -1,0 +1,52 @@
+---
+title: "Informe"
+author: "Marco Ramirez, Estuardo Hernandez"
+date: "2022-09-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(wordcloud2)
+
+
+
+db<- read.csv('train.csv')
+
+
+db$text<-gsub("#[A-Za-z0-9]+|@[A-Za-z0-9]+|\\w+(?:\\.\\w+)*/\\S+", "", db$text)
+db$text<-toupper(db$text)
+
+db$text<-gsub("HTTP://","",db$text)
+db$text<-gsub("HTTPS://","",db$text)
+db$text<-gsub("[^\x01-\x7F]", "",db$text)
+db$text<-gsub("B&amp;N", "",db$text)
+db$text<-gsub("#", "",db$text)
+db$text<-gsub('(s+)(A|AN|AND|THE|I)(s+)', '', db$text)
+db$text<-gsub(':', '', db$text)
+db$text<-gsub("'", '', db$text)
+db$text<-gsub("--|", '', db$text)
+db$text<-gsub('[[:punct:]]', '', db$text)
+db$id<-toupper(db$id)
+db$keyword<-toupper(db$keyword)
+db$location<-toupper(db$location)
+
+
+db[db == ""]<-NA
+View(db)
+
+freq<-table(db$keyword, useNA = 'no')
+
+wordcloud2(data = freq, size = 0.15, shape = "cloud",
+           color="random-dark", ellipticity = 0.5)
+
+hist(x = freq, main = "Histograma De Palabras Más Repetidas", 
+     xlab = "Frecuencia", ylab = "",
+     col = "ivory")
+
+```
