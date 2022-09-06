@@ -153,16 +153,21 @@ test<-db[-corte,]
 train<-train[complete.cases(train), ]
 sum(is.na(train))
 # 
-mymodel<-glm(Sentimiento~.,data = train,family = 'binomial')
+mymodel<-lm(Sentimiento~.,data = train)
+
+predL<-predict(mymodel,train)
+
+plot(test$text, test$Sentimiento)
+points(predL, test$Sentimiento, col="red",pch=15)
 
 
-modelo<-lm(Sentimiento~., data = train,family = binomial())
-p1<-predict(modelo, train, 
-            type = 'response')
-head(p1)
-prediccion<-ifelse(p1>=0.5,1,0)
-
-confusionMatrix(as.factor(test$Sentimiento),as.factor(prediccion))
-
+# modelo<-lm(Sentimiento~., data = train,family = binomial())
+# p1<-predict(modelo, train, 
+#             type = 'response')
+# head(p1)
+# prediccion<-ifelse(p1>=0.5,1,0)
 # 
-# pred<-predict(modelo,newdata = test, type = "response")
+# confusionMatrix(as.factor(test$Sentimiento),as.factor(prediccion))
+# 
+# # 
+# # pred<-predict(modelo,newdata = test, type = "response")
