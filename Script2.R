@@ -1,103 +1,3 @@
----
-title: "Informe"
-author: "Marco Ramirez, Estuardo Hernandez"
-date: "2022-09-02"
-output: html_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-## Analisis Exploratorio de la columna categoria
-
-```{r}
-library(wordcloud2)
-library(ggplot2)
-
-
-
-db<- read.csv('train.csv')
-# limpieza de datos
-
-db$text<-gsub("#[A-Za-z0-9]+|@[A-Za-z0-9]+|\\w+(?:\\.\\w+)*/\\S+", "", db$text)
-db$text<-toupper(db$text)
-
-db$text<-gsub("HTTP://","",db$text)
-db$text<-gsub("HTTPS://","",db$text)
-db$text<-gsub("[^\x01-\x7F]", "",db$text)
-db$text<-gsub("B&amp;N", "",db$text)
-db$text<-gsub("#", "",db$text)
-db$text<-gsub('(s+)(A|AN|AND|THE|I)(s+)', '', db$text)
-db$text<-gsub(':', '', db$text)
-db$text<-gsub("'", '', db$text)
-db$text<-gsub("--|", '', db$text)
-db$text<-gsub('[[:punct:]]', '', db$text)
-db$id<-toupper(db$id)
-db$keyword<-toupper(db$keyword)
-db$location<-toupper(db$location)
-
-
-db[db == ""]<-NA
-
-# Frecuencia de los tweets categorizados como NO CATASTROFICOS
-freq<-table(db$keyword, useNA = 'no')
-
-# Nube de palabras de esa categoria
-wordcloud2(data = freq, size = 0.15, shape = "cloud",
-           color="random-dark", ellipticity = 0.5)
-# Histograma
-hist(x = freq, main = "Histograma De Palabras Más Repetidas", 
-     xlab = "Frecuencia", ylab = "",
-     col = "ivory")
-
-no_disaster<-subset(x = db, subset = target == 0, select = c("keyword"))
-
-freq_no_disaster<-table(no_disaster$keyword)
-tabla_ordenada1<-freq_no_disaster[order(freq_no_disaster, decreasing = TRUE, na.last = TRUE)]
-#View(tabla_ordenada1)
-h1<-head(tabla_ordenada1)
-h1<-as.data.frame(h1)
-
-# Nube de palabras categorizadas como NO DESASTRES
-wordcloud2(data = freq_no_disaster, size = 0.2, shape = "cloud",
-           color="random-dark", ellipticity = 0.5)
-
-
-# Grafica de las palabras claves de NO DESASTRES
-ggplot(data=h1, aes(x=Var1, y=Freq, fill=Var1)) +
-  geom_bar(stat="identity", position=position_dodge())+
-  geom_text(aes(label=as.integer(Freq)), vjust=1.6, color="black",
-            position = position_dodge(0.9), size=3.5)+
-  labs(title="No Disaster Tweets",x='Palabra', y="Frecuencia")+
-  theme(legend.position="none")
-
-disaster<-subset(x = db, subset = target == 1, select = c("keyword"))
-
-freq_disaster<-table(disaster$keyword)
-tabla_ordenada2<-freq_disaster[order(freq_disaster, decreasing = TRUE, na.last = TRUE)]
-
-h2<-head(tabla_ordenada2)
-h2<-as.data.frame(h2)
-
-# Grafica de las palabras claves categorizadas como DESASTRES
-ggplot(data=h2, aes(x=Var1, y=Freq, fill=Var1)) +
-  geom_bar(stat="identity", position=position_dodge())+
-  geom_text(aes(label=as.integer(Freq)), vjust=1.6, color="black",
-            position = position_dodge(0.9), size=3.5)+
-  labs(title="Disaster Tweets",x='Palabra', y="Frecuencia")+
-  theme(legend.position="none")
-# Nube de palabras claves categorizadas como DESASTRES
-wordcloud2(data = freq_disaster, size = 0.2, shape = "cloud",
-           color="random-dark", ellipticity = 0.5)
-
-
-
-
-
-```
-## Analisis exploratorio de la columna text
-```{r}
 ### Analisis de texto
 library("tm")
 library("SnowballC")
@@ -109,7 +9,7 @@ library("ggplot2")
 
 db<- read.csv('train.csv')
 
-# Limpieza del texto
+
 db$text<-gsub("#[A-Za-z0-9]+|@[A-Za-z0-9]+|\\w+(?:\\.\\w+)*/\\S+", "", db$text)
 db$text<-toupper(db$text)
 
@@ -167,9 +67,9 @@ set.seed(1234)
 wordcloud(words = dtm_d$word, freq = dtm_d$freq, min.freq = 5,
           max.words=100, random.order=FALSE, rot.per=0.40, 
           colors=brewer.pal(8, "Dark2"))
-findAssocs(TextDoc_dtm, terms = c("fire","amp","bomb"), corlimit = 0.25)			
-
-findAssocs(TextDoc_dtm, terms = findFreqTerms(TextDoc_dtm, lowfreq = 50), corlimit = 0.25)
+# findAssocs(TextDoc_dtm, terms = c("fire","amp","bomb"), corlimit = 0.25)			
+# 
+# findAssocs(TextDoc_dtm, terms = findFreqTerms(TextDoc_dtm, lowfreq = 50), corlimit = 0.25)
 
 # regular sentiment score using get_sentiment() function and method of your choice
 # please note that different methods may have different scales
@@ -223,20 +123,46 @@ barplot(
 )
 
 
-```
-## Prediccion del Tweet
-```{r}
-
-
 #Agregamos columna de sentimiento a cada tweet
 db$Escala <- get_sentiment(db$text, method="bing")
+View(db)
+# 
+# 
+db$Sentimiento[db$Escala>=0]<-1
+db$Sentimiento[db$Escala<0]<-0
+# db$Sentimiento[db$Escala>-1 & db$Escala<1]<-'Neutro'
 
-db$Sentimiento[db$Escala>=1]<-'Positivo'
-db$Sentimiento[db$Escala<=  -1]<-'Negativo'
-db$Sentimiento[db$Escala>-1 & db$Escala<1]<-'Neutro'
+
+# Prediccion
 
 
+library(ModelMetrics)
+library(ggplot2)
+library(caret)
+library(dummy)
+library(GGally)
+
+porcentaje<-0.7
+db$Sentimiento<-as.factor(db$Sentimiento)
+db$text<-as.factor(db$text)
+
+corte <- sample(nrow(db),nrow(db)*porcentaje)
+train<-db[corte,]
+test<-db[-corte,]
+
+train<-train[complete.cases(train), ]
+sum(is.na(train))
+# 
+mymodel<-glm(Sentimiento~.,data = train,family = 'binomial')
 
 
-```
+modelo<-lm(Sentimiento~., data = train,family = binomial())
+p1<-predict(modelo, train, 
+            type = 'response')
+head(p1)
+prediccion<-ifelse(p1>=0.5,1,0)
 
+confusionMatrix(as.factor(test$Sentimiento),as.factor(prediccion))
+
+# 
+# pred<-predict(modelo,newdata = test, type = "response")

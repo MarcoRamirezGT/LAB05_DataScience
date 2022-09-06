@@ -75,5 +75,3 @@ wordcloud2(data = freq_disaster, size = 0.2, shape = "cloud",
 
 
 
-
-
