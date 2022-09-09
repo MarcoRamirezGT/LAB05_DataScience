@@ -125,12 +125,36 @@ barplot(
 
 #Agregamos columna de sentimiento a cada tweet
 db$Escala <- get_sentiment(db$text, method="bing")
-View(db)
+#View(db)
 # 
 # 
-db$Sentimiento[db$Escala>=0]<-1
+db$Sentimiento[db$Escala>0]<-1
 db$Sentimiento[db$Escala<0]<-0
 # db$Sentimiento[db$Escala>-1 & db$Escala<1]<-'Neutro'
+
+negativos<-db[order(db$Escala), ]
+neg<-subset(x = negativos, select = c("id", "target", "Escala"))
+neg2<-neg[1:10,]
+
+g1<-ggplot(data=neg2, aes(x=id, y=Escala, fill=Escala)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  geom_text(aes(label=as.integer(Escala)), vjust=1.6, color="black",
+            position = position_dodge(0.9), size=3.5)+
+  labs(title="Tweets más Negativos",x='Tweet', y="Negatividad")+
+  theme(legend.position="none")
+
+pos<-neg[7604:7613,]
+
+g2<-ggplot(data=pos, aes(x=id, y=Escala, fill=Escala)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  geom_text(aes(label=as.integer(Escala)), vjust=1.6, color="white",
+            position = position_dodge(0.9), size=3.5)+
+  labs(title="Tweets más Positivos",x='Tweet', y="Positividad")+
+  theme(legend.position="none")
+
+View(neg2)
+View(pos)
+
 
 
 # Prediccion
